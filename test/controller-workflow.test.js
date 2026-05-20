@@ -9,11 +9,12 @@ test('controller groups the practical teleprompter workflow first', () => {
     const html = fs.readFileSync(path.join(rootDir, 'controller.html'), 'utf8');
 
     assert.match(html, /class="control-card manuscript-card/);
-    assert.match(html, /class="format-toolbar"/);
+    assert.match(html, /class="[^"]*format-toolbar[^"]*"/);
     assert.match(html, /id="bold-text"/);
     assert.match(html, /id="italic-text"/);
     assert.match(html, /id="highlight-text"/);
     assert.match(html, /id="clear-formatting"/);
+    assert.match(html, /class="editor-format-toolbar format-toolbar"/);
     assert.match(html, /class="control-card reading-card/);
     assert.match(html, /id="reading-guide"/);
     assert.match(html, /<details class="control-card advanced-card/);
@@ -24,6 +25,7 @@ test('controller sends rich text formatting and reading guide changes', () => {
     const js = fs.readFileSync(path.join(rootDir, 'controller.js'), 'utf8');
 
     assert.match(js, /applyEditorCommand/);
+    assert.match(js, /applyHighlight/);
     assert.match(js, /clearEditorFormatting/);
     assert.match(js, /updateReadingGuide/);
     assert.match(js, /type: 'setReadingGuide'/);

@@ -169,7 +169,6 @@ body {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 8px;
-    margin-top: 10px;
 }
 
 .format-toolbar button {
@@ -206,6 +205,10 @@ body {
     font-weight: 700;
     color: #18212b;
     text-align: right;
+}
+
+.reading-card .checkbox-label {
+    margin-top: 18px;
 }
 
 .advanced-card summary {
@@ -479,6 +482,11 @@ body {
     gap: 16px;
     padding: 14px 18px;
     border-bottom: 1px solid #e1e7ee;
+}
+
+.editor-format-toolbar {
+    width: min(320px, 100%);
+    margin-left: auto;
 }
 
 .editor-stats {

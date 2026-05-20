@@ -173,7 +173,7 @@ class TeleprompterController {
         this.formatBtn.addEventListener('click', () => this.formatTextForTeleprompter());
         this.boldTextBtn.addEventListener('click', () => this.applyEditorCommand('bold'));
         this.italicTextBtn.addEventListener('click', () => this.applyEditorCommand('italic'));
-        this.highlightTextBtn.addEventListener('click', () => this.applyEditorCommand('backColor', '#fff3a3'));
+        this.highlightTextBtn.addEventListener('click', () => this.applyHighlight());
         this.accentTextBtn.addEventListener('click', () => this.applyEditorCommand('foreColor', '#ffd166'));
         this.clearFormattingBtn.addEventListener('click', () => this.clearEditorFormatting());
         
@@ -580,6 +580,14 @@ class TeleprompterController {
     applyEditorCommand(command, value = null) {
         this.textPreview.focus();
         document.execCommand(command, false, value);
+        this.sendTextUpdate();
+        this.updateDurationCalculations();
+    }
+
+    applyHighlight() {
+        this.textPreview.focus();
+        document.execCommand('backColor', false, '#fff3a3');
+        document.execCommand('foreColor', false, '#000000');
         this.sendTextUpdate();
         this.updateDurationCalculations();
     }

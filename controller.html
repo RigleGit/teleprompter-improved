@@ -33,12 +33,6 @@
                         <button id="format-text" class="format-btn">Format for Teleprompter</button>
                         <button id="clear-formatting" type="button">Remove Formatting</button>
                     </div>
-                    <div class="format-toolbar">
-                        <button id="bold-text" type="button" title="Bold">B</button>
-                        <button id="italic-text" type="button" title="Italic">I</button>
-                        <button id="highlight-text" type="button" title="Highlight">HL</button>
-                        <button id="accent-text" type="button" title="Accent color">Color</button>
-                    </div>
                     <div class="formatting-options" id="formatting-options">
                         <label class="checkbox-label">
                             <input type="checkbox" id="auto-format" checked>
@@ -176,6 +170,12 @@
             <div class="text-preview editor-workspace">
                 <div class="editor-header">
                     <h3>Text Preview</h3>
+                    <div class="editor-format-toolbar format-toolbar">
+                        <button id="bold-text" type="button" title="Bold">B</button>
+                        <button id="italic-text" type="button" title="Italic">I</button>
+                        <button id="highlight-text" type="button" title="Highlight">HL</button>
+                        <button id="accent-text" type="button" title="Accent color">Color</button>
+                    </div>
                     <div class="editor-stats">
                         <span>Words <strong id="word-count">0</strong></span>
                         <span>Expected <strong id="expected-duration">0:00</strong></span>
