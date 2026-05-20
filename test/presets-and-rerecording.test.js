@@ -33,6 +33,16 @@ test('controller exposes rerecording seek controls and hotkeys', () => {
     assert.match(js, /Alt\+Right/);
 });
 
+test('controller syncs playback state before enabling seek controls', () => {
+    const js = fs.readFileSync(path.join(rootDir, 'controller.js'), 'utf8');
+
+    assert.match(js, /handleStateSync/);
+    assert.match(js, /this\.isPlaying = Boolean\(state\.isPlaying\)/);
+    assert.match(js, /this\.isPaused = Boolean\(state\.isPaused\)/);
+    assert.match(js, /this\.setSeekButtonsDisabled\(!\(this\.isPlaying \|\| this\.isPaused\)\)/);
+    assert.doesNotMatch(js, /this\.sendInitialState\(\);\s*};/);
+});
+
 test('server and display handle signed seek playback state', () => {
     const server = fs.readFileSync(path.join(rootDir, 'server.js'), 'utf8');
     const display = fs.readFileSync(path.join(rootDir, 'display.js'), 'utf8');

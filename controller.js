@@ -27,6 +27,7 @@ class TeleprompterController {
         this.maxReconnectAttempts = 5;
         this.reconnectDelay = 1000;
         this.currentDisplayUrl = null;
+        this.hasSyncedInitialState = false;
         
         this.initializeElements();
         this.applySavedSettingsToControls();
@@ -327,8 +328,6 @@ class TeleprompterController {
                     role: 'controller'
                 }));
                 
-                // Send initial state
-                this.sendInitialState();
             };
             
             this.ws.onmessage = (event) => {
@@ -401,7 +400,7 @@ class TeleprompterController {
     handleMessage(data) {
         switch (data.type) {
             case 'stateSync':
-                // Server is syncing state - we're already the source of truth
+                this.handleStateSync(data.state);
                 break;
                 
             case 'pong':
@@ -415,6 +414,56 @@ class TeleprompterController {
             default:
                 console.log('Unknown message type:', data.type);
         }
+    }
+
+    handleStateSync(state) {
+        if (!state) {
+            return;
+        }
+
+        const serverHasSession = Boolean(state.text || state.isPlaying || state.isPaused || state.startTime);
+        if (!serverHasSession && !this.hasSyncedInitialState) {
+            this.hasSyncedInitialState = true;
+            this.sendInitialState();
+            return;
+        }
+
+        this.hasSyncedInitialState = true;
+
+        if (state.text) {
+            this.textPreview.innerHTML = state.text;
+            this.updateDurationCalculations();
+        }
+
+        this.speed = this.clampSetting(state.speed, 30, 300, this.speed);
+        this.fontSize = this.clampSetting(state.fontSize, 16, 72, this.fontSize);
+        this.textWidth = this.clampSetting(state.textWidth, 20, 100, this.textWidth);
+        this.applySavedSettingsToControls();
+
+        const segmentLength = Number(state.segmentLength) || Math.round(this.segmentDuration / 1000);
+        this.segmentDuration = segmentLength * 1000;
+        this.segmentMinutesInput.value = Math.floor(segmentLength / 60);
+        this.segmentSecondsInput.value = segmentLength % 60;
+
+        this.mirrorModeCheckbox.checked = Boolean(state.mirrorMode);
+        this.hideTimerCheckbox.checked = Boolean(state.hideTimer);
+        this.onAirModeCheckbox.checked = Boolean(state.onAir);
+
+        this.isPlaying = Boolean(state.isPlaying);
+        this.isPaused = Boolean(state.isPaused);
+        this.startTime = state.startTime || null;
+        this.pausedTime = state.pausedTime || 0;
+
+        this.startBtn.disabled = this.isPlaying;
+        this.pauseBtn.disabled = !this.isPlaying;
+        this.setSeekButtonsDisabled(!(this.isPlaying || this.isPaused));
+
+        if (this.isPlaying) {
+            this.startTimer();
+        } else {
+            this.stopTimer();
+        }
+        this.updateDisplay();
     }
     
     updateConnectionInfo(data) {
