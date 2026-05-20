@@ -293,6 +293,33 @@ wss.on('connection', (ws, req) => {
                     });
                     break;
                 }
+
+                case 'seek': {
+                    const milliseconds = Math.min(60_000, Math.max(-60_000, Number(data.milliseconds) || 0));
+                    let elapsedMs = 0;
+
+                    if (currentState.isPlaying && currentState.startTime) {
+                        elapsedMs = Math.max(0, Date.now() - currentState.startTime);
+                        elapsedMs = Math.max(0, elapsedMs + milliseconds);
+                        currentState.startTime = Date.now() - elapsedMs;
+                    } else if (currentState.isPaused) {
+                        elapsedMs = Math.max(0, currentState.pausedTime);
+                        elapsedMs = Math.max(0, elapsedMs + milliseconds);
+                        currentState.pausedTime = elapsedMs;
+                    } else {
+                        break;
+                    }
+
+                    broadcastToDisplays({
+                        type: 'seek',
+                        startTime: currentState.startTime,
+                        pausedTime: currentState.pausedTime,
+                        elapsedMs,
+                        isPlaying: currentState.isPlaying,
+                        isPaused: currentState.isPaused
+                    });
+                    break;
+                }
                     
                 case 'ping':
                     ws.send(JSON.stringify({ type: 'pong' }));

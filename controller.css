@@ -139,6 +139,44 @@ body {
     background: #ebf3fd;
 }
 
+.preset-controls input,
+.preset-controls select {
+    width: 100%;
+    min-height: 40px;
+    padding: 8px 10px;
+    border: 1px solid #bdc3c7;
+    border-radius: 6px;
+    background: white;
+    font-size: 14px;
+}
+
+.preset-actions {
+    display: grid;
+    grid-template-columns: 1fr 1.4fr 1fr 1fr;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.preset-actions button {
+    min-height: 40px;
+    border: none;
+    border-radius: 6px;
+    background: #34495e;
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.preset-actions button:hover:not(:disabled) {
+    background: #2c3e50;
+}
+
+.preset-actions button:disabled,
+.preset-actions select:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
 .control-group input[type="range"] {
     width: 70%;
     margin-right: 10px;
@@ -449,6 +487,16 @@ body {
     transform: translateY(-1px);
 }
 
+.control-btn.forward {
+    background: #2980b9;
+    color: white;
+}
+
+.control-btn.forward:hover:not(:disabled) {
+    background: #2471a3;
+    transform: translateY(-1px);
+}
+
 .control-btn.reset {
     background: #e74c3c;
     color: white;
@@ -606,7 +654,7 @@ body {
     
     .playback-controls {
         display: grid;
-        grid-template-columns: repeat(4, minmax(0, 1fr));
+        grid-template-columns: repeat(3, minmax(0, 1fr));
         gap: 8px;
     }
 

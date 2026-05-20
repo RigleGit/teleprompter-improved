@@ -218,6 +218,10 @@ class TeleprompterDisplay {
             case 'rewind':
                 this.applyPlaybackState(data);
                 break;
+
+            case 'seek':
+                this.applyPlaybackState(data);
+                break;
                 
             case 'pong':
                 // Heartbeat response

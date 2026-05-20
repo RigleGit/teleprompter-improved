@@ -10,7 +10,7 @@ test('controller exposes preroll and rewind controls', () => {
     const js = fs.readFileSync(path.join(rootDir, 'controller.js'), 'utf8');
 
     assert.match(html, /id="preroll-seconds"/);
-    assert.match(html, /id="rewind-btn"/);
+    assert.match(html, /id="rewind-10-btn"/);
     assert.match(js, /startPreroll/);
     assert.match(js, /rewindTenSeconds/);
     assert.match(js, /prerollSeconds/);
