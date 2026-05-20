@@ -117,7 +117,9 @@ class TeleprompterController {
         this.resetBtn = document.getElementById('reset-btn');
         this.textPreview = document.getElementById('text-preview');
         this.wordCount = document.getElementById('word-count');
+        this.wordCountLegacy = document.getElementById('word-count-legacy');
         this.expectedDuration = document.getElementById('expected-duration');
+        this.expectedDurationLegacy = document.getElementById('expected-duration-legacy');
         this.durationDiff = document.getElementById('duration-diff');
         this.diffValue = document.getElementById('diff-value');
         this.segmentTimer = document.getElementById('segment-timer');
@@ -826,7 +828,10 @@ class TeleprompterController {
         const segmentDurationMs = this.segmentDuration;
         
         this.wordCount.textContent = wordCount.toLocaleString();
-        this.expectedDuration.textContent = this.formatDuration(expectedDurationMs);
+        this.wordCountLegacy.textContent = wordCount.toLocaleString();
+        const expectedDuration = this.formatDuration(expectedDurationMs);
+        this.expectedDuration.textContent = expectedDuration;
+        this.expectedDurationLegacy.textContent = expectedDuration;
         
         // Calculate and display difference
         const differenceMs = segmentDurationMs - expectedDurationMs;
