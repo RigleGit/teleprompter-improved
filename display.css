@@ -60,6 +60,24 @@ body {
     background: #000;
 }
 
+.reading-guide-line {
+    position: absolute;
+    top: 50%;
+    left: max(28px, 8vw);
+    right: max(28px, 8vw);
+    height: 2px;
+    background: rgba(255, 209, 102, 0.78);
+    box-shadow: 0 0 16px rgba(255, 209, 102, 0.45);
+    display: none;
+    transform: translateY(-50%);
+    z-index: 20;
+    pointer-events: none;
+}
+
+.reading-guide-line.active {
+    display: block;
+}
+
 #prompter-text {
     padding: 40px max(32px, 7vw);
     font-size: clamp(32px, 5.6vw, 72px);

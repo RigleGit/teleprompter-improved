@@ -49,6 +49,7 @@ class TeleprompterDisplay {
         this.countdownTarget = document.getElementById('countdown-target');
         this.prerollCountdown = document.getElementById('preroll-countdown');
         this.prerollTime = document.getElementById('preroll-time');
+        this.readingGuideLine = document.getElementById('reading-guide-line');
         this.mobileModeBtn = document.getElementById('mobile-mode-btn');
         this.keepAwakeVideo = document.getElementById('keep-awake-video');
     }
@@ -186,6 +187,10 @@ class TeleprompterDisplay {
             case 'setHideTimer':
                 this.setHideTimer(data.enabled);
                 break;
+
+            case 'setReadingGuide':
+                this.setReadingGuide(data.enabled);
+                break;
                 
             case 'setOnAir':
                 this.setOnAir(data.enabled);
@@ -248,6 +253,7 @@ class TeleprompterDisplay {
         this.setTextWidth(this.textWidth);
         this.setMirrorMode(state.mirrorMode);
         this.setHideTimer(state.hideTimer);
+        this.setReadingGuide(state.readingGuide);
         this.setOnAir(state.onAir);
         
         if (state.scheduledStartTime) {
@@ -271,6 +277,12 @@ class TeleprompterDisplay {
     
     setPrompterText(text) {
         if (typeof text === 'string') {
+            if (text.includes('<')) {
+                this.prompterText.innerHTML = text;
+                this.updateScrollMetrics();
+                return;
+            }
+
             // Convert plain text to paragraphs
             const paragraphs = text.split('\n\n').filter(p => p.trim().length > 0);
             this.prompterText.innerHTML = paragraphs.map(p => `<p>${p.trim()}</p>`).join('');
@@ -378,6 +390,10 @@ class TeleprompterDisplay {
         } else {
             timerDisplay.style.display = 'flex';
         }
+    }
+
+    setReadingGuide(enabled) {
+        this.readingGuideLine.classList.toggle('active', Boolean(enabled));
     }
     
     setOnAir(enabled) {

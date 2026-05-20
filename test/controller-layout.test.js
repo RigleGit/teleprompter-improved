@@ -11,8 +11,8 @@ test('controller uses production-focused layout sections', () => {
 
     assert.match(html, /class="controls-section settings-rail"/);
     assert.match(html, /class="[^"]*control-card[^"]*manuscript-card[^"]*"/);
-    assert.match(html, /class="[^"]*control-card[^"]*readback-card[^"]*"/);
-    assert.match(html, /class="[^"]*control-card[^"]*timing-card[^"]*"/);
+    assert.match(html, /class="[^"]*control-card[^"]*reading-card[^"]*"/);
+    assert.match(html, /class="[^"]*advanced-card[^"]*"/);
     assert.match(html, /class="transport-cluster"/);
     assert.match(html, /class="seek-cluster"/);
     assert.match(css, /grid-template-columns: minmax\(320px, 380px\) minmax\(0, 1fr\)/);

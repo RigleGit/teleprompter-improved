@@ -97,6 +97,7 @@ class TeleprompterController {
         this.textWidthControl = document.getElementById('text-width');
         this.textWidthDisplay = document.getElementById('text-width-display');
         this.prerollSecondsInput = document.getElementById('preroll-seconds');
+        this.readingGuideCheckbox = document.getElementById('reading-guide');
         this.presetNameInput = document.getElementById('preset-name');
         this.presetSelect = document.getElementById('preset-select');
         this.savePresetBtn = document.getElementById('save-preset');
@@ -137,6 +138,11 @@ class TeleprompterController {
         this.formatParagraphsCheckbox = document.getElementById('format-paragraphs');
         this.formatPunctuationCheckbox = document.getElementById('format-punctuation');
         this.formatNumbersCheckbox = document.getElementById('format-numbers');
+        this.boldTextBtn = document.getElementById('bold-text');
+        this.italicTextBtn = document.getElementById('italic-text');
+        this.highlightTextBtn = document.getElementById('highlight-text');
+        this.accentTextBtn = document.getElementById('accent-text');
+        this.clearFormattingBtn = document.getElementById('clear-formatting');
     }
     
     bindEvents() {
@@ -148,6 +154,7 @@ class TeleprompterController {
         this.fontSizeControl.addEventListener('input', (e) => this.updateFontSize(e.target.value));
         this.textWidthControl.addEventListener('input', (e) => this.updateTextWidth(e.target.value));
         this.prerollSecondsInput.addEventListener('input', (e) => this.updatePrerollSeconds(e.target.value));
+        this.readingGuideCheckbox.addEventListener('change', (e) => this.updateReadingGuide(e.target.checked));
         this.mirrorModeCheckbox.addEventListener('change', (e) => this.updateMirrorMode(e.target.checked));
         this.hideTimerCheckbox.addEventListener('change', (e) => this.updateHideTimer(e.target.checked));
         this.onAirModeCheckbox.addEventListener('change', (e) => this.updateOnAir(e.target.checked));
@@ -164,6 +171,11 @@ class TeleprompterController {
         this.resetBtn.addEventListener('click', () => this.reset());
         this.copyUrlBtn.addEventListener('click', () => this.copyDisplayUrl());
         this.formatBtn.addEventListener('click', () => this.formatTextForTeleprompter());
+        this.boldTextBtn.addEventListener('click', () => this.applyEditorCommand('bold'));
+        this.italicTextBtn.addEventListener('click', () => this.applyEditorCommand('italic'));
+        this.highlightTextBtn.addEventListener('click', () => this.applyEditorCommand('backColor', '#fff3a3'));
+        this.accentTextBtn.addEventListener('click', () => this.applyEditorCommand('foreColor', '#ffd166'));
+        this.clearFormattingBtn.addEventListener('click', () => this.clearEditorFormatting());
         
         // Initially show formatting options
         this.formattingOptions.style.display = 'block';
@@ -231,7 +243,8 @@ class TeleprompterController {
             segmentMinutes: parseInt(this.segmentMinutesInput.value) || 0,
             segmentSeconds: parseInt(this.segmentSecondsInput.value) || 0,
             mirrorMode: this.mirrorModeCheckbox.checked,
-            hideTimer: this.hideTimerCheckbox.checked
+            hideTimer: this.hideTimerCheckbox.checked,
+            readingGuide: this.readingGuideCheckbox.checked
         };
     }
 
@@ -296,9 +309,11 @@ class TeleprompterController {
         this.segmentSecondsInput.value = this.clampSetting(preset.segmentSeconds, 0, 59, parseInt(this.segmentSecondsInput.value) || 0);
         this.mirrorModeCheckbox.checked = Boolean(preset.mirrorMode);
         this.hideTimerCheckbox.checked = Boolean(preset.hideTimer);
+        this.readingGuideCheckbox.checked = Boolean(preset.readingGuide);
         this.updateSegmentLength();
         this.updateMirrorMode(this.mirrorModeCheckbox.checked);
         this.updateHideTimer(this.hideTimerCheckbox.checked);
+        this.updateReadingGuide(this.readingGuideCheckbox.checked);
     }
 
     escapeHtml(value) {
@@ -392,6 +407,7 @@ class TeleprompterController {
         this.sendMessage({ type: 'setMirrorMode', enabled: this.mirrorModeCheckbox.checked });
         this.sendMessage({ type: 'setHideTimer', enabled: this.hideTimerCheckbox.checked });
         this.sendMessage({ type: 'setOnAir', enabled: this.onAirModeCheckbox.checked });
+        this.sendMessage({ type: 'setReadingGuide', enabled: this.readingGuideCheckbox.checked });
         
         // Send scheduled start if set
         if (this.scheduledStartInput.value) {
@@ -450,6 +466,7 @@ class TeleprompterController {
         this.mirrorModeCheckbox.checked = Boolean(state.mirrorMode);
         this.hideTimerCheckbox.checked = Boolean(state.hideTimer);
         this.onAirModeCheckbox.checked = Boolean(state.onAir);
+        this.readingGuideCheckbox.checked = Boolean(state.readingGuide);
 
         this.isPlaying = Boolean(state.isPlaying);
         this.isPaused = Boolean(state.isPaused);
@@ -559,6 +576,18 @@ class TeleprompterController {
         this.reset();
         this.updateDurationCalculations();
     }
+
+    applyEditorCommand(command, value = null) {
+        this.textPreview.focus();
+        document.execCommand(command, false, value);
+        this.sendTextUpdate();
+        this.updateDurationCalculations();
+    }
+
+    clearEditorFormatting() {
+        const plainText = this.textPreview.textContent || this.textPreview.innerText || '';
+        this.setPrompterTextDirectly(plainText);
+    }
     
     updateSpeed(value) {
         this.speed = parseInt(value);
@@ -617,6 +646,10 @@ class TeleprompterController {
     
     updateOnAir(enabled) {
         this.sendMessage({ type: 'setOnAir', enabled: enabled });
+    }
+
+    updateReadingGuide(enabled) {
+        this.sendMessage({ type: 'setReadingGuide', enabled: enabled });
     }
     
     updateScheduledStart() {

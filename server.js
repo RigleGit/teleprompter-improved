@@ -127,6 +127,7 @@ let currentState = {
     pausedTime: 0,
     mirrorMode: false,
     hideTimer: false,
+    readingGuide: false,
     onAir: false,
     scheduledStartTime: null,
     prerollStartAt: null
@@ -213,6 +214,11 @@ wss.on('connection', (ws, req) => {
                 case 'setHideTimer':
                     currentState.hideTimer = data.enabled;
                     broadcastToDisplays({ type: 'setHideTimer', enabled: data.enabled });
+                    break;
+
+                case 'setReadingGuide':
+                    currentState.readingGuide = data.enabled;
+                    broadcastToDisplays({ type: 'setReadingGuide', enabled: data.enabled });
                     break;
                     
                 case 'setOnAir':
