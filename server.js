@@ -1,12 +1,48 @@
 const WebSocket = require('ws');
 const http = require('http');
+const os = require('os');
 const path = require('path');
 const fs = require('fs');
 
 const PORT = process.env.PORT || 8080;
 
+function getLocalNetworkHost() {
+    if (process.env.PUBLIC_HOST) {
+        return process.env.PUBLIC_HOST;
+    }
+
+    const interfaces = os.networkInterfaces();
+    for (const addresses of Object.values(interfaces)) {
+        for (const address of addresses || []) {
+            if (address.family === 'IPv4' && !address.internal) {
+                return address.address;
+            }
+        }
+    }
+
+    return 'localhost';
+}
+
+function buildPublicConfig() {
+    const protocol = process.env.PUBLIC_PROTOCOL || 'http';
+    const host = getLocalNetworkHost();
+    const port = PORT ? `:${PORT}` : '';
+    const baseUrl = `${protocol}://${host}${port}`;
+
+    return {
+        baseUrl,
+        displayUrl: `${baseUrl}/display.html`
+    };
+}
+
 // Create HTTP server for serving static files
 const server = http.createServer((req, res) => {
+    if (req.url === '/config.json') {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(buildPublicConfig()));
+        return;
+    }
+
     let filePath = path.join(__dirname, req.url === '/' ? 'controller.html' : req.url);
     
     // Security check - prevent directory traversal
@@ -65,8 +101,9 @@ const clients = {
 // Current state to sync new connections
 let currentState = {
     text: '',
-    speed: 150,
-    fontSize: 48,
+    speed: 55,
+    fontSize: 32,
+    textWidth: 20,
     segmentLength: 10 * 60, // 10 minutes in seconds
     segmentMinutes: 10,
     segmentSeconds: 0,
@@ -106,6 +143,11 @@ wss.on('connection', (ws, req) => {
                 case 'setFontSize':
                     currentState.fontSize = data.value;
                     broadcastToDisplays({ type: 'setFontSize', value: data.value });
+                    break;
+
+                case 'setTextWidth':
+                    currentState.textWidth = data.value;
+                    broadcastToDisplays({ type: 'setTextWidth', value: data.value });
                     break;
                     
                 case 'setSegmentLength':
@@ -262,23 +304,27 @@ function broadcastConnectionCount() {
     });
 }
 
-// Start HTTP server
-server.listen(PORT, () => {
-    console.log(`HTTP Server running at http://localhost:${PORT}`);
-    console.log(`WebSocket Server running on the same port ${PORT}`);
-    console.log(`Controller: http://localhost:${PORT}/controller.html`);
-    console.log(`Display: http://localhost:${PORT}/display.html`);
-});
+if (require.main === module) {
+    const publicConfig = buildPublicConfig();
 
-// Graceful shutdown
-process.on('SIGINT', () => {
-    console.log('Shutting down servers...');
-    wss.close(() => {
-        server.close(() => {
-            console.log('Servers closed');
-            process.exit(0);
+    // Start HTTP server
+    server.listen(PORT, () => {
+        console.log(`HTTP Server running at http://localhost:${PORT}`);
+        console.log(`WebSocket Server running on the same port ${PORT}`);
+        console.log(`Controller: ${publicConfig.baseUrl}/controller.html`);
+        console.log(`Display: ${publicConfig.displayUrl}`);
+    });
+
+    // Graceful shutdown
+    process.on('SIGINT', () => {
+        console.log('Shutting down servers...');
+        wss.close(() => {
+            server.close(() => {
+                console.log('Servers closed');
+                process.exit(0);
+            });
         });
     });
-});
+}
 
-module.exports = { server, wss };
+module.exports = { server, wss, buildPublicConfig, getLocalNetworkHost };

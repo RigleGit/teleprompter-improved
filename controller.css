@@ -67,6 +67,7 @@ body {
     align-items: center;
     gap: 10px;
     font-size: 14px;
+    min-width: 0;
 }
 
 .display-url label {
@@ -74,6 +75,7 @@ body {
 }
 
 .display-url button {
+    flex: 0 0 auto;
     padding: 4px 12px;
     background: #34495e;
     border: 1px solid #5a6c7d;
@@ -81,6 +83,10 @@ body {
     border-radius: 4px;
     cursor: pointer;
     font-size: 12px;
+}
+
+#display-url {
+    overflow-wrap: anywhere;
 }
 
 .display-url button:hover {
@@ -495,26 +501,117 @@ body {
 }
 
 @media (max-width: 768px) {
+    body {
+        background: #eef1f4;
+    }
+
     .controller-header {
-        flex-direction: column;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        padding: 14px;
+        gap: 12px;
+    }
+
+    .controller-header h1 {
+        font-size: 20px;
+    }
+
+    .connection-info,
+    .display-url {
+        width: 100%;
         align-items: flex-start;
+    }
+
+    .display-url {
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        gap: 8px;
+        font-size: 12px;
+        line-height: 1.35;
     }
     
     .controller-content {
-        padding: 15px;
-        gap: 15px;
+        padding: 12px;
+        gap: 12px;
+    }
+
+    .controls-section,
+    .text-preview {
+        border-radius: 6px;
+        box-shadow: 0 1px 6px rgba(0,0,0,0.08);
+    }
+
+    .controls-section {
+        padding: 14px;
+    }
+
+    .control-group {
+        margin-bottom: 18px;
+    }
+
+    .control-group input[type="range"] {
+        width: calc(100% - 54px);
+    }
+
+    .control-group button,
+    .display-url button {
+        min-height: 40px;
+    }
+
+    .scheduled-time-group,
+    .time-input-group {
+        align-items: stretch;
+    }
+
+    .scheduled-time-group {
+        flex-direction: column;
+    }
+
+    .scheduled-time-group input[type="datetime-local"] {
+        width: 100%;
+        min-height: 42px;
+    }
+
+    .preview-area,
+    .text-preview h3 {
+        padding: 14px;
+    }
+
+    #text-preview {
+        min-height: 260px;
+        padding: 14px;
+        font-size: 16px;
     }
     
     .control-panel {
+        position: sticky;
+        bottom: 0;
+        z-index: 9;
         flex-direction: column;
         align-items: stretch;
+        padding: 12px;
+        gap: 12px;
     }
     
     .playback-controls {
-        justify-content: center;
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px;
+    }
+
+    .control-btn {
+        min-width: 0;
+        padding: 12px 8px;
+        font-size: 14px;
     }
     
     .timer-display {
-        justify-content: center;
+        justify-content: space-around;
+        gap: 12px;
+    }
+
+    .timer-item span {
+        font-size: 20px;
     }
 }
