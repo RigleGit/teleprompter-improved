@@ -74,6 +74,43 @@ The clean, distraction-free display optimized for teleprompter use:
    - Controller: http://localhost:8080/controller.html
    - Display: http://localhost:8080/display.html
 
+### Using Docker Compose
+
+1. **Create your environment file**:
+   ```bash
+   cp .env.example .env
+   ```
+
+2. **Edit `.env` for your server**:
+   ```bash
+   HOST_PORT=8080
+   PUBLIC_HOST=192.168.1.139
+   PUBLIC_PROTOCOL=http
+   PUBLIC_PORT=8080
+   ```
+
+   If you run it behind an HTTPS reverse proxy, use your domain and leave
+   `PUBLIC_PORT` empty:
+   ```bash
+   HOST_PORT=8080
+   PUBLIC_HOST=teleprompter.example.com
+   PUBLIC_PROTOCOL=https
+   PUBLIC_PORT=
+   ```
+
+3. **Start the service**:
+   ```bash
+   docker compose up -d --build
+   ```
+
+4. **Access the Application**:
+   - Controller: http://localhost:8080/controller
+   - Display: http://localhost:8080/display
+
+If you use a reverse proxy such as Caddy, Traefik, Nginx Proxy Manager, or
+nginx, make sure WebSocket upgrades are enabled for the same host. The HTTP
+server and WebSocket server both use the same port.
+
 ### Custom Port Configuration
 
 #### Node.js
@@ -132,6 +169,10 @@ open-teleprompter/
 ## Environment Variables
 
 - `PORT`: Server port for both HTTP and WebSocket (default: 8080)
+- `PUBLIC_HOST`: Hostname or IP shown to controllers and displays
+- `PUBLIC_PROTOCOL`: Public protocol for generated URLs (`http` or `https`)
+- `PUBLIC_PORT`: Public port for generated URLs. Set to an empty value when
+  using the default HTTPS/HTTP port through a reverse proxy.
 - `NODE_ENV`: Node.js environment (default: production in Docker)
 
 ## Browser Compatibility

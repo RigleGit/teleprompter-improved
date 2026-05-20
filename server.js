@@ -5,6 +5,7 @@ const path = require('path');
 const fs = require('fs');
 
 const PORT = process.env.PORT || 8080;
+const PUBLIC_PORT = process.env.PUBLIC_PORT;
 
 function getLocalNetworkHost() {
     if (process.env.PUBLIC_HOST) {
@@ -26,8 +27,9 @@ function getLocalNetworkHost() {
 function buildPublicConfig() {
     const protocol = process.env.PUBLIC_PROTOCOL || 'http';
     const host = getLocalNetworkHost();
-    const port = PORT ? `:${PORT}` : '';
-    const baseUrl = `${protocol}://${host}${port}`;
+    const port = typeof PUBLIC_PORT === 'string' ? PUBLIC_PORT : PORT;
+    const portSuffix = port ? `:${port}` : '';
+    const baseUrl = `${protocol}://${host}${portSuffix}`;
 
     return {
         baseUrl,
@@ -37,13 +39,24 @@ function buildPublicConfig() {
 
 // Create HTTP server for serving static files
 const server = http.createServer((req, res) => {
+    if (req.url === '/healthz') {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true }));
+        return;
+    }
+
     if (req.url === '/config.json') {
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify(buildPublicConfig()));
         return;
     }
 
-    let filePath = path.join(__dirname, req.url === '/' ? 'controller.html' : req.url);
+    const routes = {
+        '/': 'controller.html',
+        '/controller': 'controller.html',
+        '/display': 'display.html'
+    };
+    let filePath = path.join(__dirname, routes[req.url] || req.url);
     
     // Security check - prevent directory traversal
     if (!filePath.startsWith(__dirname)) {
