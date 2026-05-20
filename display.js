@@ -15,6 +15,7 @@ class TeleprompterDisplay {
         this.timerInterval = null;
         this.scheduledStartTime = null;
         this.scheduledCountdownInterval = null;
+        this.prerollCountdownInterval = null;
         this.reconnectAttempts = 0;
         this.maxReconnectAttempts = 5;
         this.reconnectDelay = 1000;
@@ -46,6 +47,8 @@ class TeleprompterDisplay {
         this.scheduledCountdown = document.getElementById('scheduled-countdown');
         this.countdownTime = document.getElementById('countdown-time');
         this.countdownTarget = document.getElementById('countdown-target');
+        this.prerollCountdown = document.getElementById('preroll-countdown');
+        this.prerollTime = document.getElementById('preroll-time');
         this.mobileModeBtn = document.getElementById('mobile-mode-btn');
         this.keepAwakeVideo = document.getElementById('keep-awake-video');
     }
@@ -195,9 +198,13 @@ class TeleprompterDisplay {
             case 'clearScheduledStart':
                 this.clearScheduledStart();
                 break;
+
+            case 'startPreroll':
+                this.startPrerollCountdown(data.startAt);
+                break;
                 
             case 'start':
-                this.start(data.startTime, data.pausedTime);
+                this.start(data.startTime, data.pausedTime, data.elapsedMs);
                 break;
                 
             case 'pause':
@@ -206,6 +213,10 @@ class TeleprompterDisplay {
                 
             case 'reset':
                 this.reset();
+                break;
+
+            case 'rewind':
+                this.applyPlaybackState(data);
                 break;
                 
             case 'pong':
@@ -241,7 +252,9 @@ class TeleprompterDisplay {
             this.clearScheduledStart();
         }
         
-        if (state.isPlaying) {
+        if (state.prerollStartAt && state.prerollStartAt > Date.now()) {
+            this.startPrerollCountdown(state.prerollStartAt);
+        } else if (state.isPlaying) {
             this.start(state.startTime, state.pausedTime);
         } else if (state.isPaused) {
             this.pause(state.pausedTime);
@@ -421,27 +434,72 @@ class TeleprompterDisplay {
         // Simulate receiving a start message from the server
         this.start(Date.now(), 0);
     }
+
+    startPrerollCountdown(startAt) {
+        if (!startAt) {
+            return;
+        }
+
+        this.stopPrerollCountdown();
+        this.isPlaying = false;
+        this.isPaused = false;
+        this.stopScrolling();
+        this.stopTimer();
+        this.updateScrollMetrics();
+        this.updateDisplay();
+
+        const update = () => {
+            const remainingMs = Math.max(0, startAt - Date.now());
+            const seconds = Math.ceil(remainingMs / 1000);
+            const minutes = Math.floor(seconds / 60);
+            const restSeconds = seconds % 60;
+
+            this.prerollTime.textContent = `${minutes.toString().padStart(2, '0')}:${restSeconds.toString().padStart(2, '0')}`;
+            this.prerollCountdown.classList.add('active');
+
+            if (remainingMs <= 0) {
+                this.stopPrerollCountdown();
+            }
+        };
+
+        update();
+        this.prerollCountdownInterval = setInterval(update, 100);
+    }
+
+    stopPrerollCountdown() {
+        if (this.prerollCountdownInterval) {
+            clearInterval(this.prerollCountdownInterval);
+            this.prerollCountdownInterval = null;
+        }
+
+        this.prerollCountdown.classList.remove('active');
+    }
     
-    start(startTime, pausedTime) {
+    start(startTime, pausedTime, elapsedMs = pausedTime || 0) {
+        this.stopPrerollCountdown();
         this.isPlaying = true;
         this.isPaused = false;
         this.startTime = startTime || Date.now();
         this.pausedTime = pausedTime || 0;
+        this.setPlaybackPosition(elapsedMs);
         
         this.startScrolling();
         this.startTimer();
     }
     
     pause(pausedTime) {
+        this.stopPrerollCountdown();
         this.isPlaying = false;
         this.isPaused = true;
         this.pausedTime = pausedTime || 0;
+        this.setPlaybackPosition(this.pausedTime);
         
         this.stopScrolling();
         this.stopTimer();
     }
     
     reset() {
+        this.stopPrerollCountdown();
         this.isPlaying = false;
         this.isPaused = false;
         this.startTime = null;
@@ -454,6 +512,50 @@ class TeleprompterDisplay {
         this.applyPrompterTransform();
         this.updateDisplay();
     }
+
+    applyPlaybackState(data) {
+        if (typeof data.startTime === 'number') {
+            this.startTime = data.startTime;
+        }
+        if (typeof data.pausedTime === 'number') {
+            this.pausedTime = data.pausedTime;
+        }
+
+        this.isPlaying = Boolean(data.isPlaying);
+        this.isPaused = Boolean(data.isPaused);
+
+        const elapsedMs = typeof data.elapsedMs === 'number'
+            ? data.elapsedMs
+            : this.getElapsedMs();
+        this.setPlaybackPosition(elapsedMs);
+
+        if (this.isPlaying) {
+            this.startScrolling();
+            this.startTimer();
+        } else {
+            this.stopScrolling();
+            this.stopTimer();
+        }
+
+        this.updateDisplay();
+    }
+
+    getElapsedMs() {
+        if (this.isPaused) {
+            return this.pausedTime;
+        }
+
+        return Math.max(0, Date.now() - (this.startTime || Date.now()));
+    }
+
+    setPlaybackPosition(elapsedMs, refreshMetrics = true) {
+        if (refreshMetrics) {
+            this.updateScrollMetrics();
+        }
+        elapsedMs = Math.max(0, elapsedMs);
+        this.currentPosition = this.scrollMetrics.firstLineCenter + elapsedMs * this.scrollMetrics.pixelsPerMs;
+        this.applyPrompterTransform();
+    }
     
     startScrolling() {
         this.stopScrolling();
@@ -462,12 +564,7 @@ class TeleprompterDisplay {
         const scroll = () => {
             if (!this.isPlaying) return;
 
-            const elapsedMs = Date.now() - this.startTime;
-            this.currentPosition = this.scrollMetrics.firstLineCenter + elapsedMs * this.scrollMetrics.pixelsPerMs;
-            
-            // Start from below screen (100%) and scroll up to show content naturally
-            // The text will scroll from bottom to top, showing all content from the beginning
-            this.applyPrompterTransform();
+            this.setPlaybackPosition(Date.now() - this.startTime, false);
             
             this.animationId = requestAnimationFrame(scroll);
         };
@@ -483,6 +580,7 @@ class TeleprompterDisplay {
     }
     
     startTimer() {
+        this.stopTimer();
         this.timerInterval = setInterval(() => {
             this.updateDisplay();
         }, 1000);

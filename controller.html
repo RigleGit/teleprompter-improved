@@ -119,6 +119,11 @@
                         <span>No scheduled start time set</span>
                     </div>
                 </div>
+
+                <div class="control-group">
+                    <label for="preroll-seconds">Start Cooldown (seconds):</label>
+                    <input type="number" id="preroll-seconds" min="0" max="60" value="0">
+                </div>
                 
                 <div class="control-group">
                     <label>Display Options:</label>
@@ -160,6 +165,10 @@
                 <button id="pause-btn" class="control-btn pause" disabled>
                     <span class="btn-icon">⏸</span>
                     Pause
+                </button>
+                <button id="rewind-btn" class="control-btn rewind" disabled>
+                    <span class="btn-icon">↶</span>
+                    -10s
                 </button>
                 <button id="reset-btn" class="control-btn reset">
                     <span class="btn-icon">⏹</span>

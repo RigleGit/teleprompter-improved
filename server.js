@@ -115,8 +115,38 @@ let currentState = {
     mirrorMode: false,
     hideTimer: false,
     onAir: false,
-    scheduledStartTime: null
+    scheduledStartTime: null,
+    prerollStartAt: null
 };
+
+let pendingStartTimeout = null;
+
+function cancelPendingStart() {
+    if (pendingStartTimeout) {
+        clearTimeout(pendingStartTimeout);
+        pendingStartTimeout = null;
+    }
+    currentState.prerollStartAt = null;
+}
+
+function beginPlayback() {
+    cancelPendingStart();
+    const elapsedMs = currentState.pausedTime || 0;
+    currentState.isPlaying = true;
+    currentState.isPaused = false;
+    currentState.onAir = true; // Automatically turn on air indicator
+    currentState.scheduledStartTime = null; // Clear scheduled start
+    currentState.startTime = Date.now() - (currentState.pausedTime || 0);
+
+    broadcastToDisplays({
+        type: 'start',
+        startTime: currentState.startTime,
+        pausedTime: currentState.pausedTime,
+        elapsedMs
+    });
+    broadcastToDisplays({ type: 'setOnAir', enabled: true });
+    broadcastToDisplays({ type: 'clearScheduledStart' });
+}
 
 wss.on('connection', (ws, req) => {
     console.log('New WebSocket connection');
@@ -186,28 +216,30 @@ wss.on('connection', (ws, req) => {
                     currentState.scheduledStartTime = null;
                     broadcastToDisplays({ type: 'clearScheduledStart' });
                     break;
+
+                case 'startPreroll': {
+                    cancelPendingStart();
+                    const seconds = Math.min(60, Math.max(0, Number(data.seconds) || 0));
+                    const startAt = Date.now() + seconds * 1000;
+                    currentState.isPlaying = false;
+                    currentState.isPaused = false;
+                    currentState.prerollStartAt = startAt;
+                    currentState.pausedTime = 0;
+                    currentState.startTime = null;
+                    broadcastToDisplays({ type: 'startPreroll', startAt, seconds });
+                    pendingStartTimeout = setTimeout(beginPlayback, seconds * 1000);
+                    break;
+                }
                     
                 case 'start':
-                    currentState.isPlaying = true;
-                    currentState.isPaused = false;
-                    currentState.onAir = true; // Automatically turn on air indicator
-                    currentState.scheduledStartTime = null; // Clear scheduled start
-                    currentState.startTime = Date.now() - (currentState.pausedTime || 0);
-                    broadcastToDisplays({ 
-                        type: 'start', 
-                        startTime: currentState.startTime,
-                        pausedTime: currentState.pausedTime
-                    });
-                    // Send on air update to displays
-                    broadcastToDisplays({ type: 'setOnAir', enabled: true });
-                    // Clear scheduled start on displays
-                    broadcastToDisplays({ type: 'clearScheduledStart' });
+                    beginPlayback();
                     break;
                     
                 case 'pause':
+                    cancelPendingStart();
                     currentState.isPlaying = false;
                     currentState.isPaused = true;
-                    currentState.pausedTime = Date.now() - currentState.startTime;
+                    currentState.pausedTime = currentState.startTime ? Date.now() - currentState.startTime : 0;
                     broadcastToDisplays({ 
                         type: 'pause',
                         pausedTime: currentState.pausedTime
@@ -215,6 +247,7 @@ wss.on('connection', (ws, req) => {
                     break;
                     
                 case 'reset':
+                    cancelPendingStart();
                     currentState.isPlaying = false;
                     currentState.isPaused = false;
                     currentState.currentPosition = 0;
@@ -222,6 +255,31 @@ wss.on('connection', (ws, req) => {
                     currentState.pausedTime = 0;
                     broadcastToDisplays({ type: 'reset' });
                     break;
+
+                case 'rewind': {
+                    const milliseconds = Math.min(60_000, Math.max(0, Number(data.milliseconds) || 10_000));
+                    let elapsedMs = 0;
+
+                    if (currentState.isPlaying && currentState.startTime) {
+                        elapsedMs = Math.max(0, Date.now() - currentState.startTime - milliseconds);
+                        currentState.startTime = Date.now() - elapsedMs;
+                    } else if (currentState.isPaused) {
+                        elapsedMs = Math.max(0, currentState.pausedTime - milliseconds);
+                        currentState.pausedTime = elapsedMs;
+                    } else {
+                        break;
+                    }
+
+                    broadcastToDisplays({
+                        type: 'rewind',
+                        startTime: currentState.startTime,
+                        pausedTime: currentState.pausedTime,
+                        elapsedMs,
+                        isPlaying: currentState.isPlaying,
+                        isPaused: currentState.isPaused
+                    });
+                    break;
+                }
                     
                 case 'ping':
                     ws.send(JSON.stringify({ type: 'pong' }));

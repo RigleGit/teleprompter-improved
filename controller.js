@@ -4,7 +4,8 @@ class TeleprompterController {
         this.defaultSettings = {
             speed: 55,
             fontSize: 32,
-            textWidth: 20
+            textWidth: 20,
+            prerollSeconds: 0
         };
         const savedSettings = this.loadSavedSettings();
 
@@ -18,7 +19,9 @@ class TeleprompterController {
         this.speed = savedSettings.speed;
         this.fontSize = savedSettings.fontSize;
         this.textWidth = savedSettings.textWidth;
+        this.prerollSeconds = savedSettings.prerollSeconds;
         this.timerInterval = null;
+        this.prerollTimeout = null;
         this.reconnectAttempts = 0;
         this.maxReconnectAttempts = 5;
         this.reconnectDelay = 1000;
@@ -38,7 +41,8 @@ class TeleprompterController {
             return {
                 speed: this.clampSetting(savedSettings.speed, 30, 300, this.defaultSettings.speed),
                 fontSize: this.clampSetting(savedSettings.fontSize, 16, 72, this.defaultSettings.fontSize),
-                textWidth: this.clampSetting(savedSettings.textWidth, 20, 100, this.defaultSettings.textWidth)
+                textWidth: this.clampSetting(savedSettings.textWidth, 20, 100, this.defaultSettings.textWidth),
+                prerollSeconds: this.clampSetting(savedSettings.prerollSeconds, 0, 60, this.defaultSettings.prerollSeconds)
             };
         } catch (error) {
             console.warn('Unable to load saved teleprompter settings:', error);
@@ -59,7 +63,8 @@ class TeleprompterController {
             localStorage.setItem(this.settingsStorageKey, JSON.stringify({
                 speed: this.speed,
                 fontSize: this.fontSize,
-                textWidth: this.textWidth
+                textWidth: this.textWidth,
+                prerollSeconds: this.prerollSeconds
             }));
         } catch (error) {
             console.warn('Unable to save teleprompter settings:', error);
@@ -73,6 +78,7 @@ class TeleprompterController {
         this.fontSizeDisplay.textContent = this.fontSize + 'px';
         this.textWidthControl.value = this.textWidth;
         this.textWidthDisplay.textContent = this.textWidth + '%';
+        this.prerollSecondsInput.value = this.prerollSeconds;
     }
     
     initializeElements() {
@@ -86,6 +92,7 @@ class TeleprompterController {
         this.fontSizeDisplay = document.getElementById('font-size-display');
         this.textWidthControl = document.getElementById('text-width');
         this.textWidthDisplay = document.getElementById('text-width-display');
+        this.prerollSecondsInput = document.getElementById('preroll-seconds');
         this.mirrorModeCheckbox = document.getElementById('mirror-mode');
         this.hideTimerCheckbox = document.getElementById('hide-timer');
         this.onAirModeCheckbox = document.getElementById('on-air-mode');
@@ -94,6 +101,7 @@ class TeleprompterController {
         this.scheduleInfo = document.getElementById('schedule-info');
         this.startBtn = document.getElementById('start-btn');
         this.pauseBtn = document.getElementById('pause-btn');
+        this.rewindBtn = document.getElementById('rewind-btn');
         this.resetBtn = document.getElementById('reset-btn');
         this.textPreview = document.getElementById('text-preview');
         this.wordCount = document.getElementById('word-count');
@@ -125,6 +133,7 @@ class TeleprompterController {
         this.segmentSecondsInput.addEventListener('input', () => this.updateSegmentLength());
         this.fontSizeControl.addEventListener('input', (e) => this.updateFontSize(e.target.value));
         this.textWidthControl.addEventListener('input', (e) => this.updateTextWidth(e.target.value));
+        this.prerollSecondsInput.addEventListener('input', (e) => this.updatePrerollSeconds(e.target.value));
         this.mirrorModeCheckbox.addEventListener('change', (e) => this.updateMirrorMode(e.target.checked));
         this.hideTimerCheckbox.addEventListener('change', (e) => this.updateHideTimer(e.target.checked));
         this.onAirModeCheckbox.addEventListener('change', (e) => this.updateOnAir(e.target.checked));
@@ -132,6 +141,7 @@ class TeleprompterController {
         this.clearScheduleBtn.addEventListener('click', () => this.clearScheduledStart());
         this.startBtn.addEventListener('click', () => this.start());
         this.pauseBtn.addEventListener('click', () => this.pause());
+        this.rewindBtn.addEventListener('click', () => this.rewindTenSeconds());
         this.resetBtn.addEventListener('click', () => this.reset());
         this.copyUrlBtn.addEventListener('click', () => this.copyDisplayUrl());
         this.formatBtn.addEventListener('click', () => this.formatTextForTeleprompter());
@@ -396,6 +406,12 @@ class TeleprompterController {
         this.saveSettings();
         this.sendMessage({ type: 'setTextWidth', value: this.textWidth });
     }
+
+    updatePrerollSeconds(value) {
+        this.prerollSeconds = this.clampSetting(value, 0, 60, this.defaultSettings.prerollSeconds);
+        this.prerollSecondsInput.value = this.prerollSeconds;
+        this.saveSettings();
+    }
     
     updateMirrorMode(enabled) {
         this.sendMessage({ type: 'setMirrorMode', enabled: enabled });
@@ -442,6 +458,30 @@ class TeleprompterController {
             this.resume();
             return;
         }
+
+        if (this.prerollSeconds > 0) {
+            this.startPreroll();
+            return;
+        }
+
+        this.beginPlayback();
+    }
+
+    startPreroll() {
+        this.startBtn.disabled = true;
+        this.pauseBtn.disabled = false;
+        this.rewindBtn.disabled = true;
+        this.sendMessage({ type: 'startPreroll', seconds: this.prerollSeconds });
+
+        clearTimeout(this.prerollTimeout);
+        this.prerollTimeout = setTimeout(() => {
+            this.beginPlayback(false);
+        }, this.prerollSeconds * 1000);
+    }
+
+    beginPlayback(sendStartMessage = true) {
+        clearTimeout(this.prerollTimeout);
+        this.prerollTimeout = null;
         
         this.isPlaying = true;
         this.isPaused = false;
@@ -452,18 +492,36 @@ class TeleprompterController {
         
         this.startBtn.disabled = true;
         this.pauseBtn.disabled = false;
+        this.rewindBtn.disabled = false;
         
-        this.sendMessage({ type: 'start' });
+        if (sendStartMessage) {
+            this.sendMessage({ type: 'start' });
+        }
         this.startTimer();
     }
     
     pause() {
+        if (this.prerollTimeout && !this.isPlaying) {
+            clearTimeout(this.prerollTimeout);
+            this.prerollTimeout = null;
+            this.isPaused = false;
+            this.pausedTime = 0;
+            this.startBtn.disabled = false;
+            this.pauseBtn.disabled = true;
+            this.rewindBtn.disabled = true;
+            this.sendMessage({ type: 'reset' });
+            this.stopTimer();
+            this.updateDisplay();
+            return;
+        }
+
         this.isPaused = true;
         this.isPlaying = false;
         this.pausedTime = Date.now() - this.startTime;
         
         this.startBtn.disabled = false;
         this.pauseBtn.disabled = true;
+        this.rewindBtn.disabled = false;
         
         this.sendMessage({ type: 'pause' });
         this.stopTimer();
@@ -476,6 +534,7 @@ class TeleprompterController {
         
         this.startBtn.disabled = true;
         this.pauseBtn.disabled = false;
+        this.rewindBtn.disabled = false;
         
         this.sendMessage({ type: 'start' });
         this.startTimer();
@@ -490,13 +549,32 @@ class TeleprompterController {
         
         this.startBtn.disabled = false;
         this.pauseBtn.disabled = true;
+        this.rewindBtn.disabled = true;
+        clearTimeout(this.prerollTimeout);
+        this.prerollTimeout = null;
         
         this.sendMessage({ type: 'reset' });
         this.stopTimer();
         this.updateDisplay();
     }
+
+    rewindTenSeconds() {
+        if (!this.isPlaying && !this.isPaused) {
+            return;
+        }
+
+        if (this.isPaused) {
+            this.pausedTime = Math.max(0, this.pausedTime - 10000);
+        } else {
+            this.startTime = Math.min(Date.now(), this.startTime + 10000);
+        }
+
+        this.sendMessage({ type: 'rewind', milliseconds: 10000 });
+        this.updateDisplay();
+    }
     
     startTimer() {
+        this.stopTimer();
         this.timerInterval = setInterval(() => {
             this.updateDisplay();
         }, 1000);
