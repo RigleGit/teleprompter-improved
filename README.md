@@ -10,6 +10,8 @@ A professional open-source web-based teleprompter application with controller-di
 
 Open Teleprompter provides a complete solution for professional teleprompter needs, featuring real-time synchronization between controller and display interfaces, manuscript formatting, mobile-friendly display controls, presets, and Docker deployment support.
 
+This fork keeps the original Eyevinn teleprompter foundation and adds a set of controller, display, mobile, and deployment improvements focused on personal recording workflows.
+
 ## Screenshots
 
 ### Controller Interface
@@ -24,25 +26,37 @@ The clean, distraction-free display optimized for teleprompter use:
 
 ## Features
 
+### Original Project Features
+
 - **Controller-Display Architecture**: Separate interfaces connected via WebSocket
 - **Manuscript Upload**: Support for text files (.txt) and Word documents (.docx)
-- **Manuscript Formatting**: Teleprompter formatting plus basic rich text controls
-- **Configurable Reading Setup**: Adjustable speed from 30-300 words per minute, font size, and centered text width
+- **Manuscript Formatting**: Teleprompter formatting options
+- **Configurable Speed**: Adjustable reading speed
+- **Segment Timing**: Set custom segment lengths with countdown timer
+- **Scheduled Start**: Set future start times with countdown display
+- **Duration Calculations**: Real-time calculation of expected reading time vs. segment length
+- **On-Air Indicator**: Visual indicator with automatic activation
+- **Live Text Editing**: Edit text directly in the controller
+- **Auto-scrolling**: Smooth text scrolling based on reading speed
+- **Playback Controls**: Start, pause, and reset functionality
+- **Multiple Displays**: Support for multiple synchronized displays
+- **Mirror Mode**: For use with teleprompter hardware
+- **Fullscreen Support**: F11 or F key for fullscreen mode
+
+### Added In This Fork
+
+- **Focused Controller UI**: Script editor, reading setup, display options, advanced timing, and presets
+- **Rich Text Editing**: Bold, italic, highlight, accent color, and remove formatting controls
+- **Expanded Reading Setup**: Adjustable speed from 30-300 words per minute, font size, and centered text width
 - **Optional Reading Guide**: Horizontal guide line on the display
 - **Start Cooldown**: Countdown before playback starts
 - **Re-recording Controls**: Jump -5s, -10s, and +5s while recording
 - **Settings Presets**: Save and load preferred reading/display settings
-- **Advanced Timing**: Optional segment length and scheduled start controls
-- **Duration Calculations**: Real-time calculation of expected reading time vs. segment length
-- **On-Air Indicator**: Visual indicator with automatic activation
 - **Mobile Display Mode**: Fullscreen/wake-lock helpers for phone display use
-- **Focused Controller UI**: Script editor, reading setup, display options, advanced timing, and presets
-- **Live Text Editing**: Edit text directly in the controller
-- **Auto-scrolling**: Smooth text scrolling based on reading speed
-- **Playback Controls**: Start, pause, reset, and timed seeking
-- **Multiple Displays**: Support for multiple synchronized displays
-- **Mirror Mode**: For use with teleprompter hardware
-- **Fullscreen Support**: F11 or F key for fullscreen mode
+- **Improved Mobile/Mirror Layout**: Display controls and indicators remain readable in mobile and mirror mode
+- **Accurate WPM Scrolling**: Scroll timing is based on word count and measured text travel distance
+- **Centered Text Width Control**: Limit and center the readable text column for camera-facing delivery
+- **Docker Compose Deployment**: `.env.example`, `docker-compose.yml`, public URL configuration, and `/healthz`
 
 ## Quick Start
 
