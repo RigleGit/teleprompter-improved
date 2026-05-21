@@ -9,7 +9,8 @@ test('display page exposes a mobile mode control', () => {
     const html = fs.readFileSync(path.join(rootDir, 'display.html'), 'utf8');
 
     assert.match(html, /id="mobile-mode-btn"/);
-    assert.match(html, /Modo móvil/);
+    assert.match(html, /Mobile mode/);
+    assert.doesNotMatch(html, /Modo móvil/);
 });
 
 test('display mobile mode requests fullscreen and screen wake lock', () => {
@@ -17,6 +18,9 @@ test('display mobile mode requests fullscreen and screen wake lock', () => {
 
     assert.match(js, /requestFullscreen/);
     assert.match(js, /navigator\.wakeLock\.request\('screen'\)/);
+    assert.match(js, /Mobile mode active/);
+    assert.match(js, /Tap to reactivate/);
+    assert.doesNotMatch(js, /Modo móvil|Pantalla|Toca|Activando/);
 });
 
 test('display mobile mode starts a keep-awake video fallback', () => {

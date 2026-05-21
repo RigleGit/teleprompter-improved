@@ -651,7 +651,7 @@ class TeleprompterDisplay {
     async enableMobileMode() {
         const requestId = ++this.mobileModeRequestId;
         this.mobileModeEnabled = true;
-        this.setMobileModeStatus('Activando...');
+        this.setMobileModeStatus('Activating...');
 
         await Promise.allSettled([
             this.requestFullscreen(),
@@ -668,11 +668,11 @@ class TeleprompterDisplay {
         const fullscreenActive = Boolean(document.fullscreenElement);
 
         if ((wakeLockActive || keepAwakeVideoActive) && fullscreenActive) {
-            this.setMobileModeStatus('Modo móvil activo');
+            this.setMobileModeStatus('Mobile mode active');
         } else if (wakeLockActive || keepAwakeVideoActive) {
-            this.setMobileModeStatus('Pantalla despierta');
+            this.setMobileModeStatus('Screen awake');
         } else {
-            this.setMobileModeStatus('Pantalla completa');
+            this.setMobileModeStatus('Fullscreen');
         }
     }
 
@@ -709,7 +709,7 @@ class TeleprompterDisplay {
             }
         }
 
-        this.setMobileModeStatus('Modo móvil');
+        this.setMobileModeStatus('Mobile mode');
     }
 
     async requestFullscreen() {
@@ -729,7 +729,7 @@ class TeleprompterDisplay {
             this.wakeLock.addEventListener('release', () => {
                 this.wakeLock = null;
                 if (this.mobileModeEnabled && !document.hidden) {
-                    this.setMobileModeStatus('Toca para reactivar');
+                    this.setMobileModeStatus('Tap to reactivate');
                 }
             });
         } catch (error) {

@@ -40,7 +40,7 @@ test('builds display URL from configured LAN host', () => {
         PORT: '8080'
     });
 
-    assert.equal(server.buildPublicConfig().displayUrl, 'http://192.168.1.139:8080/display.html');
+    assert.equal(server.buildPublicConfig().displayUrl, 'http://192.168.1.139:8080/display');
 
     restore();
 });
@@ -53,7 +53,7 @@ test('builds public URL without port for HTTPS reverse proxy', () => {
         PORT: '8080'
     });
 
-    assert.equal(server.buildPublicConfig().displayUrl, 'https://teleprompter.example.com/display.html');
+    assert.equal(server.buildPublicConfig().displayUrl, 'https://teleprompter.example.com/display');
 
     restore();
 });

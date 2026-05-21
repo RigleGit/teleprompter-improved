@@ -32,6 +32,16 @@ test('controller sends rich text formatting and reading guide changes', () => {
     assert.match(js, /document\.execCommand/);
 });
 
+test('controller display URL copy uses the clean display route', () => {
+    const html = fs.readFileSync(path.join(rootDir, 'controller.html'), 'utf8');
+    const js = fs.readFileSync(path.join(rootDir, 'controller.js'), 'utf8');
+
+    assert.match(html, /Open display/);
+    assert.match(js, /\/display`/);
+    assert.doesNotMatch(html, /display\.html/);
+    assert.doesNotMatch(js, /\/display\.html/);
+});
+
 test('server and display sync optional reading guide', () => {
     const server = fs.readFileSync(path.join(rootDir, 'server.js'), 'utf8');
     const displayHtml = fs.readFileSync(path.join(rootDir, 'display.html'), 'utf8');

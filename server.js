@@ -33,7 +33,7 @@ function buildPublicConfig() {
 
     return {
         baseUrl,
-        displayUrl: `${baseUrl}/display.html`
+        displayUrl: `${baseUrl}/display`
     };
 }
 
@@ -415,7 +415,7 @@ if (require.main === module) {
     server.listen(PORT, () => {
         console.log(`HTTP Server running at http://localhost:${PORT}`);
         console.log(`WebSocket Server running on the same port ${PORT}`);
-        console.log(`Controller: ${publicConfig.baseUrl}/controller.html`);
+        console.log(`Controller: ${publicConfig.baseUrl}/controller`);
         console.log(`Display: ${publicConfig.displayUrl}`);
     });
 
